@@ -1,5 +1,0 @@
-plugins { id 'com.android.application' }
-
-android { namespace 'rs.imlek.lorascore'; compileSdk 35
-    defaultConfig { applicationId 'rs.imlek.lorascore'; minSdk 23; targetSdk 35; versionCode 1; versionName '1.0' }
-}
