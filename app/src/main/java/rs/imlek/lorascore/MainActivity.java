@@ -256,7 +256,24 @@ public class MainActivity extends Activity {
             ranking.addView(row);
         }
         root.addView(ranking);
+private String gameIcon() {
+    switch (gameIndex) {
+        case 0: return "+";
+        case 1: return "−";
+        case 2: return "K♥";
+        case 3: return "Q♥";
+        case 4: return "♥♥♥";
+        case 5: return "L";
+        case 6: return "💰";
+        default: return "";
+    }
+}
 
+private void clearCurrentScores() {
+    for (int i = 0; i < 4; i++) {
+        scores[round][gameIndex][i] = 0;
+    }
+}
         Button again = button("▶  Nova partija", true);
         again.setOnClickListener(v -> {
             scores = new int[4][7][4];
