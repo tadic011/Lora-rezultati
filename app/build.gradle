@@ -1,0 +1,14 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'rs.lora.score'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'rs.lora.score'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+}
