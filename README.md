@@ -1,11 +1,17 @@
-# Lora Score Android app
+# Lora Score
 
-Ovo je Android Studio projekat koji pakuje Lora score aplikaciju kao pravu Android aplikaciju sa ikonicom.
+Android aplikacija za vođenje rezultata u kartaskoj igri Lora.
 
-## Kako da napraviš APK
-1. Otvori folder `LoraAndroidApp` u Android Studio.
-2. Sačekaj da Gradle završi sync.
-3. Izaberi `Build > Build App Bundle(s) / APK(s) > Build APK(s)`.
-4. APK će biti u `app/build/outputs/apk/debug/app-debug.apk`.
+## Pravila u aplikaciji
+- 4 igraca
+- 4 partije/kruga
+- 7 igara: Plus, Minus, Pop Herc, Dame, Herčevi, Lora, Igra po želji
+- Pobednik je igrac sa najmanjim ukupnim brojem poena
+- Poeni mogu biti pozitivni, negativni ili nula
 
-Aplikacija radi offline jer se HTML nalazi u `app/src/main/assets/index.html`.
+## Kako napraviti APK preko GitHub-a
+1. Uploaduj ceo sadrzaj ovog foldera u GitHub repository.
+2. Otvori tab Actions.
+3. Izaberi workflow: Build Android APK.
+4. Klikni Run workflow.
+5. Kada zavrsi, otvori poslednji run i preuzmi Artifact: Lora-Score-APK.
