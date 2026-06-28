@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
     private final int CARD = Color.rgb(18, 28, 28);
     private final int GREEN = Color.rgb(104, 214, 112);
     private final int GREEN_DARK = Color.rgb(37, 126, 55);
+    private final int GOLD = Color.rgb(236, 198, 86);
     private final int TEXT = Color.WHITE;
     private final int MUTED = Color.rgb(190, 200, 196);
 
@@ -46,11 +47,15 @@ public class MainActivity extends Activity {
         showStart();
     }
 
-    private GradientDrawable bg(int color, int radius, int strokeColor, int strokeWidth) {
+    private int dp(int v) {
+        return (int)(v * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private GradientDrawable bg(int color, int radiusDp, int strokeColor, int strokeWidthDp) {
         GradientDrawable g = new GradientDrawable();
         g.setColor(color);
-        g.setCornerRadius(radius);
-        if (strokeWidth > 0) g.setStroke(strokeWidth, strokeColor);
+        g.setCornerRadius(dp(radiusDp));
+        if (strokeWidthDp > 0) g.setStroke(dp(strokeWidthDp), strokeColor);
         return g;
     }
 
@@ -60,7 +65,7 @@ public class MainActivity extends Activity {
 
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(28, 34, 28, 34);
+        root.setPadding(dp(16), dp(20), dp(16), dp(24));
 
         scroll.addView(root);
         setContentView(scroll);
@@ -72,7 +77,7 @@ public class MainActivity extends Activity {
         v.setTextColor(TEXT);
         v.setTextSize(sp);
         v.setTypeface(Typeface.DEFAULT, style);
-        v.setPadding(0, 8, 0, 8);
+        v.setPadding(0, dp(4), 0, dp(4));
         return v;
     }
 
@@ -85,14 +90,14 @@ public class MainActivity extends Activity {
     private LinearLayout card() {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(22, 20, 22, 20);
-        c.setBackground(bg(CARD, 28, Color.rgb(45, 75, 55), 2));
+        c.setPadding(dp(14), dp(12), dp(14), dp(12));
+        c.setBackground(bg(CARD, 16, Color.rgb(45, 75, 55), 1));
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        lp.setMargins(0, 12, 0, 12);
+        lp.setMargins(0, dp(7), 0, dp(7));
         c.setLayoutParams(lp);
         return c;
     }
@@ -107,12 +112,12 @@ public class MainActivity extends Activity {
     private Button button(String s, boolean primary) {
         Button b = new Button(this);
         b.setText(s);
-        b.setTextSize(18);
+        b.setTextSize(17);
         b.setAllCaps(false);
         b.setTextColor(Color.WHITE);
-        b.setPadding(14, 18, 14, 18);
+        b.setPadding(dp(14), dp(14), dp(14), dp(14));
         b.setBackground(bg(primary ? Color.rgb(35, 139, 61) : Color.rgb(38, 45, 45),
-                20,
+                16,
                 primary ? GREEN : Color.rgb(65, 75, 75),
                 1));
 
@@ -120,7 +125,7 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        lp.setMargins(0, 12, 0, 10);
+        lp.setMargins(0, dp(8), 0, dp(6));
         b.setLayoutParams(lp);
         return b;
     }
@@ -130,40 +135,59 @@ public class MainActivity extends Activity {
         e.setText(s);
         e.setTextColor(Color.WHITE);
         e.setHintTextColor(MUTED);
-        e.setTextSize(19);
+        e.setTextSize(18);
         e.setSingleLine(true);
         e.setSelectAllOnFocus(true);
-        e.setPadding(20, 14, 20, 14);
-        e.setBackground(bg(Color.rgb(7, 12, 12), 16, GREEN_DARK, 2));
+        e.setPadding(dp(14), dp(10), dp(14), dp(10));
+        e.setBackground(bg(Color.rgb(7, 12, 12), 10, GREEN_DARK, 1));
         return e;
     }
 
-    private void addHeader(String subtitle) {
-        TextView title = text("♠ Lora Score", 34, Typeface.BOLD);
-        title.setTextColor(Color.WHITE);
-        root.addView(title);
+    private ImageView iconView(int resId, int sizeDp) {
+        ImageView iv = new ImageView(this);
+        iv.setImageResource(resId);
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        iv.setPadding(dp(3), dp(3), dp(3), dp(3));
+        iv.setBackground(bg(Color.rgb(7, 18, 14), 12, GREEN_DARK, 1));
+        iv.setAdjustViewBounds(true);
+        return iv;
+    }
 
-        TextView sub = text(subtitle, 22, Typeface.BOLD);
+    private void addHeader(String subtitle) {
+        LinearLayout header = row();
+
+        ImageView logo = iconView(R.drawable.ic_launcher_lora, 44);
+        LinearLayout.LayoutParams logoLp = new LinearLayout.LayoutParams(dp(44), dp(44));
+        logoLp.setMargins(0, 0, dp(10), 0);
+        header.addView(logo, logoLp);
+
+        TextView title = text("Lora Score", 30, Typeface.BOLD);
+        title.setTextColor(Color.WHITE);
+        header.addView(title);
+
+        root.addView(header);
+
+        TextView sub = text(subtitle, 21, Typeface.BOLD);
         sub.setTextColor(GREEN);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
-        lp.setMargins(0, 18, 0, 16);
+        lp.setMargins(0, dp(14), 0, dp(8));
         sub.setLayoutParams(lp);
         root.addView(sub);
     }
 
-    private String gameIcon() {
+    private int gameIconRes() {
         switch (gameIndex) {
-            case 0: return "+";
-            case 1: return "−";
-            case 2: return "K♥";
-            case 3: return "Q♥";
-            case 4: return "♥ ♥ ♥";
-            case 5: return "L";
-            case 6: return "💰";
-            default: return "";
+            case 0: return R.drawable.ic_game_plus;
+            case 1: return R.drawable.ic_game_minus;
+            case 2: return R.drawable.ic_game_popherc;
+            case 3: return R.drawable.ic_game_dame;
+            case 4: return R.drawable.ic_game_hercevi;
+            case 5: return R.drawable.ic_game_lora;
+            case 6: return R.drawable.ic_game_zelja;
+            default: return R.drawable.ic_game_lora;
         }
     }
 
@@ -179,9 +203,22 @@ public class MainActivity extends Activity {
 
         for (int i = 0; i < 4; i++) {
             LinearLayout c = card();
-            c.addView(text("👤  Igrač " + (i + 1), 16, Typeface.BOLD));
+
+            LinearLayout playerRow = row();
+            TextView person = text("●", 28, Typeface.BOLD);
+            person.setTextColor(GREEN);
+            LinearLayout.LayoutParams pLp = new LinearLayout.LayoutParams(dp(42), dp(42));
+            pLp.setMargins(0, 0, dp(12), 0);
+            playerRow.addView(person, pLp);
+
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.addView(text("Igrač " + (i + 1), 15, Typeface.BOLD));
             nameFields[i] = input(names[i]);
-            c.addView(nameFields[i]);
+            box.addView(nameFields[i]);
+
+            playerRow.addView(box, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+            c.addView(playerRow);
             root.addView(c);
         }
 
@@ -201,8 +238,21 @@ public class MainActivity extends Activity {
         root.addView(reset);
 
         LinearLayout footer = card();
-        footer.addView(text("🏆 Lora Score", 22, Typeface.BOLD));
-        footer.addView(muted("Pratite bodove i uživajte u partiji!", 16));
+        LinearLayout frow = row();
+        TextView cup = text("🏆", 28, Typeface.BOLD);
+        LinearLayout.LayoutParams cupLp = new LinearLayout.LayoutParams(dp(48), dp(48));
+        cupLp.setMargins(0, 0, dp(12), 0);
+        frow.addView(cup, cupLp);
+
+        LinearLayout ftext = new LinearLayout(this);
+        ftext.setOrientation(LinearLayout.VERTICAL);
+        TextView ft = text("Lora Score", 20, Typeface.BOLD);
+        ft.setTextColor(GOLD);
+        ftext.addView(ft);
+        ftext.addView(muted("Pratite bodove i uživajte u partiji!", 14));
+        frow.addView(ftext, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+        footer.addView(frow);
         root.addView(footer);
     }
 
@@ -211,33 +261,29 @@ public class MainActivity extends Activity {
         addHeader("Krug " + (round + 1) + " / 4");
 
         LinearLayout gameCard = card();
-
         LinearLayout top = row();
 
-        TextView icon = text(gameIcon(), 42, Typeface.BOLD);
-        icon.setTextColor(GREEN);
-        icon.setGravity(Gravity.CENTER);
-        icon.setBackground(bg(Color.rgb(7, 18, 14), 14, GREEN_DARK, 2));
-        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(76, 76);
-        iconLp.setMargins(0, 0, 18, 0);
+        ImageView icon = iconView(gameIconRes(), 72);
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(72), dp(72));
+        iconLp.setMargins(0, 0, dp(16), 0);
         top.addView(icon, iconLp);
 
         LinearLayout titleBox = new LinearLayout(this);
         titleBox.setOrientation(LinearLayout.VERTICAL);
 
-        TextView gameTitle = text(games[gameIndex], 32, Typeface.BOLD);
+        TextView gameTitle = text(games[gameIndex], 30, Typeface.BOLD);
         gameTitle.setTextColor(GREEN);
         titleBox.addView(gameTitle);
-        titleBox.addView(muted("Igra " + (gameIndex + 1) + " / 7", 14));
+        titleBox.addView(muted("Igra " + (gameIndex + 1) + " / 7", 13));
+        titleBox.addView(muted("Pobednik ima najmanje poena.", 13));
 
-        top.addView(titleBox);
+        top.addView(titleBox, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         gameCard.addView(top);
-        gameCard.addView(muted("Unesi poene. Pobednik ima najmanje poena.", 15));
         root.addView(gameCard);
 
         for (int i = 0; i < 4; i++) {
             LinearLayout c = card();
-            c.addView(text(names[i], 17, Typeface.BOLD));
+            c.addView(text(names[i], 16, Typeface.BOLD));
 
             scoreFields[i] = input(String.valueOf(scores[round][gameIndex][i]));
             scoreFields[i].setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
@@ -315,7 +361,10 @@ public class MainActivity extends Activity {
         if (totalCard == null) return;
 
         totalCard.removeAllViews();
-        totalCard.addView(text("Total score", 23, Typeface.BOLD));
+
+        TextView title = text("Total score", 22, Typeface.BOLD);
+        title.setTextColor(GREEN);
+        totalCard.addView(title);
 
         int[] t = totals();
 
@@ -328,7 +377,7 @@ public class MainActivity extends Activity {
 
         for (int rank = 0; rank < 4; rank++) {
             int i = order[rank];
-            TextView line = text((rank + 1) + ".  " + names[i] + "    " + t[i], 19, Typeface.BOLD);
+            TextView line = text((rank + 1) + ".  " + names[i] + "    " + t[i], 18, Typeface.BOLD);
             if (rank == 0) line.setTextColor(GREEN);
             totalCard.addView(line);
         }
