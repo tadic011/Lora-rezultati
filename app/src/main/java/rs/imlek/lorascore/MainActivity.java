@@ -5,7 +5,7 @@ import android.os.*;
 import android.content.*;
 import android.graphics.*;
 import android.graphics.drawable.*;
-import android.text.InputType;
+import android.text.*;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
@@ -16,7 +16,8 @@ public class MainActivity extends Activity {
     private final EditText[] scoreFields = new EditText[4];
 
     private LinearLayout root;
-    private int round = 0, gameIndex = 0;
+    private int round = 0;
+    private int gameIndex = 0;
     private int[][][] scores = new int[4][7][4];
     private String[] names = {"Igrač 1", "Igrač 2", "Igrač 3", "Igrač 4"};
     private SharedPreferences prefs;
@@ -27,6 +28,7 @@ public class MainActivity extends Activity {
     private final int GREEN_DARK = Color.rgb(37, 126, 55);
     private final int TEXT = Color.WHITE;
     private final int MUTED = Color.rgb(190, 200, 196);
+    private final int RED = Color.rgb(235, 92, 92);
 
     @Override
     public void onCreate(Bundle b) {
@@ -49,11 +51,9 @@ public class MainActivity extends Activity {
     private void base() {
         ScrollView scroll = new ScrollView(this);
         scroll.setBackgroundColor(BG);
-
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(28, 34, 28, 34);
-
         scroll.addView(root);
         setContentView(scroll);
     }
@@ -79,7 +79,6 @@ public class MainActivity extends Activity {
         c.setOrientation(LinearLayout.VERTICAL);
         c.setPadding(22, 20, 22, 20);
         c.setBackground(bg(CARD, 28, Color.rgb(45, 75, 55), 2));
-
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -97,7 +96,6 @@ public class MainActivity extends Activity {
         b.setTextColor(Color.WHITE);
         b.setPadding(14, 18, 14, 18);
         b.setBackground(bg(primary ? GREEN_DARK : Color.rgb(38, 45, 45), 20, primary ? GREEN : Color.rgb(65, 75, 75), 1));
-
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -122,9 +120,7 @@ public class MainActivity extends Activity {
 
     private void addHeader(String subtitle) {
         TextView title = text("♠ Lora Score", 34, Typeface.BOLD);
-        title.setTextColor(Color.WHITE);
         root.addView(title);
-
         TextView sub = text(subtitle, 22, Typeface.BOLD);
         sub.setTextColor(GREEN);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -134,6 +130,25 @@ public class MainActivity extends Activity {
         lp.setMargins(0, 18, 0, 16);
         sub.setLayoutParams(lp);
         root.addView(sub);
+    }
+
+    private String gameIcon() {
+        switch (gameIndex) {
+            case 0: return "+";
+            case 1: return "−";
+            case 2: return "K♥";
+            case 3: return "Q♛";
+            case 4: return "♥ ♥ ♥";
+            case 5: return "L";
+            case 6: return "💰";
+            default: return "";
+        }
+    }
+
+    private void clearCurrentScores() {
+        for (int i = 0; i < 4; i++) {
+            scores[round][gameIndex][i] = 0;
+        }
     }
 
     private void showStart() {
@@ -174,10 +189,29 @@ public class MainActivity extends Activity {
         addHeader("Krug " + (round + 1) + " / 4");
 
         LinearLayout gameCard = card();
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView icon = text(gameIcon(), 42, Typeface.BOLD);
+        icon.setTextColor(GREEN);
+        icon.setGravity(Gravity.CENTER);
+        icon.setBackground(bg(Color.rgb(7, 12, 12), 22, GREEN_DARK, 2));
+        icon.setPadding(18, 10, 18, 10);
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(110, 110);
+        iconLp.setMargins(0, 0, 20, 0);
+        icon.setLayoutParams(iconLp);
+        top.addView(icon);
+
+        LinearLayout titleBox = new LinearLayout(this);
+        titleBox.setOrientation(LinearLayout.VERTICAL);
         TextView gameTitle = text(games[gameIndex], 32, Typeface.BOLD);
         gameTitle.setTextColor(GREEN);
-        gameCard.addView(gameTitle);
-        gameCard.addView(muted("Unesi poene. Pobednik je igrač sa najmanje poena.", 15));
+        titleBox.addView(gameTitle);
+        titleBox.addView(muted("Unesi poene. Pobednik ima najmanje poena.", 15));
+        top.addView(titleBox);
+
+        gameCard.addView(top);
         root.addView(gameCard);
 
         for (int i = 0; i < 4; i++) {
@@ -185,7 +219,12 @@ public class MainActivity extends Activity {
             c.addView(text(names[i], 17, Typeface.BOLD));
             scoreFields[i] = input(String.valueOf(scores[round][gameIndex][i]));
             scoreFields[i].setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-            scoreFields[i].setOnFocusChangeListener((v, has) -> { if (!has) readScores(); });
+            scoreFields[i].setOnFocusChangeListener((v, has) -> {
+                if (!has) {
+                    readScores();
+                    save();
+                }
+            });
             c.addView(scoreFields[i]);
             root.addView(c);
         }
@@ -196,9 +235,12 @@ public class MainActivity extends Activity {
         next.setOnClickListener(v -> {
             readScores();
             save();
-            if (isLast()) showResult();
-            else {
+            if (isLast()) {
+                showResult();
+            } else {
                 advance();
+                clearCurrentScores();
+                save();
                 showGame();
             }
         });
@@ -218,24 +260,27 @@ public class MainActivity extends Activity {
         LinearLayout c = card();
         c.addView(text("Total score", 23, Typeface.BOLD));
         int[] t = totals();
-
-        Integer[] order = {0,1,2,3};
-        Arrays.sort(order, (a,b) -> Integer.compare(t[a], t[b]));
+        Integer[] order = {0, 1, 2, 3};
+        Arrays.sort(order, (a, b) -> Integer.compare(t[a], t[b]));
 
         for (int rank = 0; rank < 4; rank++) {
             int i = order[rank];
-            TextView line = text((rank + 1) + ".  " + names[i] + "    " + t[i], 19, Typeface.BOLD);
+            String value = String.valueOf(t[i]);
+            TextView line = text((rank + 1) + ".  " + names[i] + "    " + value, 19, Typeface.BOLD);
             if (rank == 0) line.setTextColor(GREEN);
+            if (t[i] < 0) line.setTextColor(rank == 0 ? GREEN : Color.rgb(255, 210, 120));
             c.addView(line);
         }
         root.addView(c);
     }
 
     private void showResult() {
+        readScores();
+        save();
         base();
         int[] t = totals();
-        Integer[] order = {0,1,2,3};
-        Arrays.sort(order, (a,b) -> Integer.compare(t[a], t[b]));
+        Integer[] order = {0, 1, 2, 3};
+        Arrays.sort(order, (a, b) -> Integer.compare(t[a], t[b]));
 
         addHeader("🏆 Pobednik");
 
@@ -256,24 +301,7 @@ public class MainActivity extends Activity {
             ranking.addView(row);
         }
         root.addView(ranking);
-private String gameIcon() {
-    switch (gameIndex) {
-        case 0: return "+";
-        case 1: return "−";
-        case 2: return "K♥";
-        case 3: return "Q♥";
-        case 4: return "♥♥♥";
-        case 5: return "L";
-        case 6: return "💰";
-        default: return "";
-    }
-}
 
-private void clearCurrentScores() {
-    for (int i = 0; i < 4; i++) {
-        scores[round][gameIndex][i] = 0;
-    }
-}
         Button again = button("▶  Nova partija", true);
         again.setOnClickListener(v -> {
             scores = new int[4][7][4];
@@ -290,9 +318,15 @@ private void clearCurrentScores() {
     }
 
     private void readScores() {
+        if (scoreFields[0] == null) return;
         for (int i = 0; i < 4; i++) {
             try {
-                scores[round][gameIndex][i] = Integer.parseInt(scoreFields[i].getText().toString().trim());
+                String value = scoreFields[i].getText().toString().trim();
+                if (value.length() == 0 || value.equals("-") || value.equals("+")) {
+                    scores[round][gameIndex][i] = 0;
+                } else {
+                    scores[round][gameIndex][i] = Integer.parseInt(value);
+                }
             } catch (Exception e) {
                 scores[round][gameIndex][i] = 0;
             }
@@ -301,10 +335,13 @@ private void clearCurrentScores() {
 
     private int[] totals() {
         int[] t = new int[4];
-        for (int r = 0; r < 4; r++)
-            for (int g = 0; g < 7; g++)
-                for (int p = 0; p < 4; p++)
-                    t[p] += scores[r][g][p];
+        for (int r = 0; r < 4; r++) {
+            for (int g = 0; g < 7; g++) {
+                for (int p = 0; p < 4; p++) {
+                    t[p] = t[p] + scores[r][g][p];
+                }
+            }
+        }
         return t;
     }
 
@@ -321,8 +358,9 @@ private void clearCurrentScores() {
     }
 
     private void retreat() {
-        if (gameIndex > 0) gameIndex--;
-        else if (round > 0) {
+        if (gameIndex > 0) {
+            gameIndex--;
+        } else if (round > 0) {
             round--;
             gameIndex = 6;
         }
@@ -332,7 +370,7 @@ private void clearCurrentScores() {
         new AlertDialog.Builder(this)
                 .setTitle("Obriši sve?")
                 .setMessage("Brišu se svi rezultati.")
-                .setPositiveButton("Obriši", (d,w) -> {
+                .setPositiveButton("Obriši", (d, w) -> {
                     prefs.edit().clear().apply();
                     scores = new int[4][7][4];
                     names = new String[]{"Igrač 1", "Igrač 2", "Igrač 3", "Igrač 4"};
@@ -348,26 +386,30 @@ private void clearCurrentScores() {
         SharedPreferences.Editor e = prefs.edit();
         e.putInt("round", round);
         e.putInt("game", gameIndex);
-
         for (int i = 0; i < 4; i++) e.putString("name" + i, names[i]);
-
-        for (int r = 0; r < 4; r++)
-            for (int g = 0; g < 7; g++)
-                for (int p = 0; p < 4; p++)
+        for (int r = 0; r < 4; r++) {
+            for (int g = 0; g < 7; g++) {
+                for (int p = 0; p < 4; p++) {
                     e.putInt("s" + r + "_" + g + "_" + p, scores[r][g][p]);
-
+                }
+            }
+        }
         e.apply();
     }
 
     private void load() {
         round = prefs.getInt("round", 0);
         gameIndex = prefs.getInt("game", 0);
+        if (round < 0 || round > 3) round = 0;
+        if (gameIndex < 0 || gameIndex > 6) gameIndex = 0;
 
         for (int i = 0; i < 4; i++) names[i] = prefs.getString("name" + i, names[i]);
-
-        for (int r = 0; r < 4; r++)
-            for (int g = 0; g < 7; g++)
-                for (int p = 0; p < 4; p++)
+        for (int r = 0; r < 4; r++) {
+            for (int g = 0; g < 7; g++) {
+                for (int p = 0; p < 4; p++) {
                     scores[r][g][p] = prefs.getInt("s" + r + "_" + g + "_" + p, 0);
+                }
+            }
+        }
     }
 }
