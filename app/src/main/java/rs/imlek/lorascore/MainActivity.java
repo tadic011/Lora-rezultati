@@ -269,6 +269,15 @@ public class MainActivity extends Activity {
         refreshTotals();
         refreshRuleMessage();
 
+        Button preview = button("ZA NEVERNE TOME", false);
+        preview.setOnClickListener(v -> {
+            readScores();
+            visited[round][gameIndex] = true;
+            save();
+            showPreview();
+        });
+        root.addView(preview);
+
         Button next = button(isLast() ? "🏁  Završi partiju" : "▶  Sledeća igra", true);
         next.setOnClickListener(v -> {
             readScores();
@@ -370,6 +379,78 @@ public class MainActivity extends Activity {
             if (rank == 0) line.setTextColor(GREEN);
             totalCard.addView(line);
         }
+    }
+
+    private void showPreview() {
+        base();
+        addHeader("ZA NEVERNE TOME");
+
+        LinearLayout intro = card();
+        intro.addView(text("Pregled poena tokom partije", 20, Typeface.BOLD));
+        intro.addView(muted("Tabelarni prikaz svih unetih rezultata po igri i igraču.", 13));
+        root.addView(intro);
+
+        LinearLayout table = card();
+
+        LinearLayout header = row();
+        TextView first = previewCell("Igra", true, GREEN);
+        header.addView(first, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.35f));
+
+        for (int p = 0; p < 4; p++) {
+            TextView h = previewCell(shortName(names[p]), true, GREEN);
+            header.addView(h, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        table.addView(header);
+
+        for (int r = 0; r < 4; r++) {
+            for (int g = 0; g < 7; g++) {
+                if (!visited[r][g] && !(r == round && g == gameIndex)) continue;
+
+                LinearLayout tr = row();
+                String label = (r + 1) + ". " + games[g];
+                tr.addView(previewCell(label, false, TEXT), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.35f));
+
+                for (int p = 0; p < 4; p++) {
+                    tr.addView(previewCell(String.valueOf(scores[r][g][p]), false, TEXT), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                }
+                table.addView(tr);
+            }
+        }
+
+        LinearLayout total = row();
+        total.addView(previewCell("TOTAL", true, GREEN), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.35f));
+
+        int[] t = totals();
+        for (int p = 0; p < 4; p++) {
+            total.addView(previewCell(String.valueOf(t[p]), true, GREEN), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        table.addView(total);
+
+        root.addView(table);
+
+        Button backToGame = button("◀  Nazad na igru", true);
+        backToGame.setOnClickListener(v -> showGame());
+        root.addView(backToGame);
+
+        Button startScreen = button("👥  Imena igrača", false);
+        startScreen.setOnClickListener(v -> showStart());
+        root.addView(startScreen);
+    }
+
+    private TextView previewCell(String value, boolean bold, int color) {
+        TextView v = text(value, 13, bold ? Typeface.BOLD : Typeface.NORMAL);
+        v.setTextColor(color);
+        v.setGravity(Gravity.CENTER);
+        v.setPadding(dp(3), dp(5), dp(3), dp(5));
+        v.setBackground(bg(Color.rgb(7, 12, 12), 6, Color.rgb(45, 75, 55), 1));
+        return v;
+    }
+
+    private String shortName(String value) {
+        if (value == null) return "";
+        String v = value.trim();
+        if (v.length() <= 7) return v;
+        return v.substring(0, 7);
     }
 
     private void showResult() {
