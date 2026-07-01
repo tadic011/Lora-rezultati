@@ -169,7 +169,8 @@ public class MainActivity extends Activity {
 
     private String ruleText() {
         if (gameIndex == 0) return "Samo negativni brojevi. Zbir ne sme biti manji od -8.";
-        if (gameIndex >= 1 && gameIndex <= 4) return "Samo pozitivni brojevi. Zbir ne sme biti veći od 8.";
+        if (gameIndex >= 1 && gameIndex <= 3) return "Samo pozitivni brojevi. Zbir ne sme biti veći od 8.";
+        if (gameIndex == 4) return "Herčevi: pozitivno do zbira 8 ili jedan igrač -8, ostali 0.";
         return "Slobodan unos pozitivnih i negativnih poena.";
     }
 
@@ -320,13 +321,44 @@ public class MainActivity extends Activity {
         int sum = currentGameSum();
 
         if (gameIndex == 0) {
-            for (int i=0; i<4; i++) if (scores[round][gameIndex][i] > 0) return "Plus prihvata samo negativne brojeve.";
+            for (int i=0; i<4; i++) {
+                if (scores[round][gameIndex][i] > 0) return "Plus prihvata samo negativne brojeve.";
+            }
             if (sum < -8) return "Zbir u igri Plus ne sme biti manji od -8. Trenutno: " + sum;
         }
 
-        if (gameIndex >= 1 && gameIndex <= 4) {
-            for (int i=0; i<4; i++) if (scores[round][gameIndex][i] < 0) return games[gameIndex] + " prihvata samo pozitivne brojeve.";
+        if (gameIndex >= 1 && gameIndex <= 3) {
+            for (int i=0; i<4; i++) {
+                if (scores[round][gameIndex][i] < 0) return games[gameIndex] + " prihvata samo pozitivne brojeve.";
+            }
             if (sum > 8) return "Zbir u igri " + games[gameIndex] + " ne sme biti veći od 8. Trenutno: " + sum;
+        }
+
+        if (gameIndex == 4) {
+            int negativeCount = 0;
+            int minusEightCount = 0;
+            int positiveCount = 0;
+            int zeroCount = 0;
+
+            for (int i=0; i<4; i++) {
+                int value = scores[round][gameIndex][i];
+
+                if (value < 0) {
+                    negativeCount++;
+                    if (value == -8) minusEightCount++;
+                } else if (value > 0) {
+                    positiveCount++;
+                } else {
+                    zeroCount++;
+                }
+            }
+
+            boolean onePlayerMinusEight = minusEightCount == 1 && negativeCount == 1 && positiveCount == 0 && zeroCount == 3;
+            boolean positiveMode = negativeCount == 0 && sum <= 8;
+
+            if (!onePlayerMinusEight && !positiveMode) {
+                return "Herčevi: dozvoljeno je pozitivno do zbira 8 ili tačno jedan igrač -8, ostali 0. Trenutno: " + sum;
+            }
         }
 
         return "";
