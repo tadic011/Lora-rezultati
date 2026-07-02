@@ -26,7 +26,8 @@ public class MainActivity extends Activity {
     private boolean[][] visited = new boolean[4][7];
     private String[] names = {"Igrač 1", "Igrač 2", "Igrač 3", "Igrač 4"};
     private SharedPreferences prefs;
-    private ToneGenerator tone;
+    private SoundPool soundPool;
+    private int clickSoundId = 0;
 
     private final int BG = Color.rgb(8,14,14);
     private final int CARD = Color.rgb(18,28,28);
@@ -41,7 +42,14 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(Color.rgb(6,10,10));
         getWindow().setNavigationBarColor(Color.rgb(6,10,10));
         prefs = getSharedPreferences("lora_score", MODE_PRIVATE);
-        tone = new ToneGenerator(AudioManager.STREAM_MUSIC, 65);
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(4)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build())
+                .build();
+        clickSoundId = soundPool.load(this, R.raw.card_click, 1);
         load();
         showStart();
     }
@@ -186,23 +194,56 @@ public class MainActivity extends Activity {
 
 
     private void applyPageAnimation(View view) {
-        Animation a = new TranslateAnimation(
-                Animation.RELATIVE_TO_SELF, 0.08f,
-                Animation.RELATIVE_TO_SELF, 0.0f,
-                Animation.RELATIVE_TO_SELF, 0.0f,
-                Animation.RELATIVE_TO_SELF, 0.0f
-        );
-        a.setDuration(180);
-        a.setInterpolator(new DecelerateInterpolator());
-        view.startAnimation(a);
+        try {
+            view.setCameraDistance(12000 * getResources().getDisplayMetrics().density);
+            view.setRotationY(86f);
+            view.setAlpha(0.20f);
+            view.setScaleX(0.88f);
+            view.setScaleY(0.88f);
+            view.setTranslationX(90f);
+
+            view.animate()
+                    .rotationY(0f)
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .translationX(0f)
+                    .setDuration(1400)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        } catch (Exception e) {
+            Animation a = new TranslateAnimation(
+                    Animation.RELATIVE_TO_SELF, 0.15f,
+                    Animation.RELATIVE_TO_SELF, 0.0f,
+                    Animation.RELATIVE_TO_SELF, 0.0f,
+                    Animation.RELATIVE_TO_SELF, 0.0f
+            );
+            a.setDuration(900);
+            a.setInterpolator(new DecelerateInterpolator());
+            view.startAnimation(a);
+        }
     }
 
     private void playClickIfNeeded() {
         if (gameIndex == 5 || gameIndex == 6) {
             try {
-                if (tone != null) tone.startTone(ToneGenerator.TONE_PROP_BEEP, 45);
+                if (soundPool != null && clickSoundId != 0) {
+                    soundPool.play(clickSoundId, 0.75f, 0.75f, 1, 0, 1.0f);
+                }
+                getWindow().getDecorView().performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
             } catch (Exception ignored) {}
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            if (soundPool != null) {
+                soundPool.release();
+                soundPool = null;
+            }
+        } catch (Exception ignored) {}
+        super.onDestroy();
     }
 
     private void showStart() {
